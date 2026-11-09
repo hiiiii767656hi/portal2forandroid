@@ -271,10 +271,10 @@ fun onGoogleSignInClicked(
     scope: CoroutineScope
 ) {
     val clientId = try {
-        context.getString(R.string.default_web_client_id)
+        val resId = context.resources.getIdentifier("default_web_client_id", "string", context.packageName)
+        if (resId != 0) context.getString(resId) else "4317631859-2lu6d2lapdld93nj1b297ms8653n1dlk.apps.googleusercontent.com"
     } catch (e: Exception) {
-        onAuthError("Google Sign-In configuration missing: default_web_client_id not found")
-        return
+        "4317631859-2lu6d2lapdld93nj1b297ms8653n1dlk.apps.googleusercontent.com"
     }
 
     val signInOption = GetSignInWithGoogleOption.Builder(serverClientId = clientId).build()
