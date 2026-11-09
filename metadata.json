@@ -1,0 +1,6 @@
+{
+  "name": "Portal Lab",
+  "description": "Momentum-driven portal physics puzzle game with dual-joystick touch controls, test chambers, custom chamber editor, and cloud saves.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
