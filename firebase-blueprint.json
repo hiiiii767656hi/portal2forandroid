@@ -1,0 +1,188 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with display name, statistics, and high-level progress",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Unique user ID matching auth.uid"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name of the test subject"
+        },
+        "totalChambersCompleted": {
+          "type": "integer",
+          "description": "Number of chambers finished"
+        },
+        "totalPortalsFired": {
+          "type": "integer",
+          "description": "Total portal shots fired"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update timestamp"
+        }
+      },
+      "required": ["userId", "displayName"]
+    },
+    "GameSave": {
+      "title": "GameSave",
+      "description": "Cloud save state for a test chamber progress or quick save slot",
+      "type": "object",
+      "properties": {
+        "saveId": {
+          "type": "string",
+          "description": "Unique save identifier"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner user ID matching auth.uid"
+        },
+        "chamberId": {
+          "type": "string",
+          "description": "Identifier of the test chamber (e.g. chamber_01)"
+        },
+        "chamberName": {
+          "type": "string",
+          "description": "Display name of the chamber"
+        },
+        "playerPosX": {
+          "type": "number",
+          "description": "Player X coordinate"
+        },
+        "playerPosY": {
+          "type": "number",
+          "description": "Player Y coordinate"
+        },
+        "playerVelX": {
+          "type": "number",
+          "description": "Player velocity X"
+        },
+        "playerVelY": {
+          "type": "number",
+          "description": "Player velocity Y"
+        },
+        "bluePortalActive": {
+          "type": "boolean",
+          "description": "Whether blue portal is open"
+        },
+        "orangePortalActive": {
+          "type": "boolean",
+          "description": "Whether orange portal is open"
+        },
+        "bluePortalX": {
+          "type": "number",
+          "description": "Blue portal X"
+        },
+        "bluePortalY": {
+          "type": "number",
+          "description": "Blue portal Y"
+        },
+        "bluePortalNormalX": {
+          "type": "number",
+          "description": "Blue portal surface normal X"
+        },
+        "bluePortalNormalY": {
+          "type": "number",
+          "description": "Blue portal surface normal Y"
+        },
+        "orangePortalX": {
+          "type": "number",
+          "description": "Orange portal X"
+        },
+        "orangePortalY": {
+          "type": "number",
+          "description": "Orange portal Y"
+        },
+        "orangePortalNormalX": {
+          "type": "number",
+          "description": "Orange portal surface normal X"
+        },
+        "orangePortalNormalY": {
+          "type": "number",
+          "description": "Orange portal surface normal Y"
+        },
+        "elapsedSeconds": {
+          "type": "number",
+          "description": "Chamber timer in seconds"
+        },
+        "portalsFired": {
+          "type": "integer",
+          "description": "Portals fired in this run"
+        },
+        "isCompleted": {
+          "type": "boolean",
+          "description": "Whether chamber is completed"
+        },
+        "cubesStateJson": {
+          "type": "string",
+          "description": "Serialized positions of weighted companion cubes"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Update timestamp"
+        }
+      },
+      "required": ["userId", "chamberId"]
+    },
+    "ChamberScore": {
+      "title": "ChamberScore",
+      "description": "Best time and portal count record for a chamber",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner user ID"
+        },
+        "chamberId": {
+          "type": "string",
+          "description": "Chamber identifier"
+        },
+        "bestTimeSeconds": {
+          "type": "number",
+          "description": "Fastest completion time"
+        },
+        "minPortals": {
+          "type": "integer",
+          "description": "Least portals used"
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When record was achieved"
+        }
+      },
+      "required": ["userId", "chamberId", "bestTimeSeconds"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/saves/{saveId}": {
+      "schema": {
+        "$ref": "#/entities/GameSave"
+      },
+      "description": "User chamber cloud saves and checkpoints"
+    },
+    "/users/{userId}/records/{chamberId}": {
+      "schema": {
+        "$ref": "#/entities/ChamberScore"
+      },
+      "description": "User chamber speedrun and portal efficiency records"
+    },
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "User test subject profile"
+    }
+  }
+}

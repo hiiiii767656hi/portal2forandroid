@@ -1,0 +1,112 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidUserProfile(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 50 &&
+             (!('totalChambersCompleted' in data) || data.totalChambersCompleted is int) &&
+             (!('totalPortalsFired' in data) || data.totalPortalsFired is int) &&
+             (!('updatedAt' in data) || (data.updatedAt is timestamp && data.updatedAt <= request.time));
+    }
+
+    function isValidGameSave(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.chamberId is string && data.chamberId.size() >= 1 && data.chamberId.size() <= 64 &&
+             (!('chamberName' in data) || (data.chamberName is string && data.chamberName.size() <= 64)) &&
+             (!('playerPosX' in data) || (data.playerPosX is number)) &&
+             (!('playerPosY' in data) || (data.playerPosY is number)) &&
+             (!('playerVelX' in data) || (data.playerVelX is number)) &&
+             (!('playerVelY' in data) || (data.playerVelY is number)) &&
+             (!('bluePortalActive' in data) || data.bluePortalActive is bool) &&
+             (!('orangePortalActive' in data) || data.orangePortalActive is bool) &&
+             (!('bluePortalX' in data) || data.bluePortalX is number) &&
+             (!('bluePortalY' in data) || data.bluePortalY is number) &&
+             (!('bluePortalNormalX' in data) || data.bluePortalNormalX is number) &&
+             (!('bluePortalNormalY' in data) || data.bluePortalNormalY is number) &&
+             (!('orangePortalX' in data) || data.orangePortalX is number) &&
+             (!('orangePortalY' in data) || data.orangePortalY is number) &&
+             (!('orangePortalNormalX' in data) || data.orangePortalNormalX is number) &&
+             (!('orangePortalNormalY' in data) || data.orangePortalNormalY is number) &&
+             (!('elapsedSeconds' in data) || data.elapsedSeconds is number) &&
+             (!('portalsFired' in data) || data.portalsFired is int) &&
+             (!('isCompleted' in data) || data.isCompleted is bool) &&
+             (!('cubesStateJson' in data) || (data.cubesStateJson is string && data.cubesStateJson.size() <= 10000)) &&
+             (!('createdAt' in data) || (data.createdAt is timestamp && data.createdAt <= request.time)) &&
+             (!('updatedAt' in data) || (data.updatedAt is timestamp && data.updatedAt <= request.time));
+    }
+
+    function isValidChamberScore(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.chamberId is string && data.chamberId.size() >= 1 && data.chamberId.size() <= 64 &&
+             data.bestTimeSeconds is number && data.bestTimeSeconds >= 0 &&
+             (!('minPortals' in data) || (data.minPortals is int && data.minPortals >= 0)) &&
+             (!('completedAt' in data) || (data.completedAt is timestamp && data.completedAt <= request.time));
+    }
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // User profile
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) &&
+                       isValidUserProfile(incoming());
+      allow update: if isOwner(userId) &&
+                       incoming().userId == existing().userId &&
+                       isValidUserProfile(incoming());
+      allow delete: if isOwner(userId);
+
+      // Cloud saves subcollection
+      match /saves/{saveId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(saveId) &&
+                         incoming().userId == request.auth.uid &&
+                         isValidGameSave(incoming());
+        allow update: if isOwner(userId) &&
+                         isValidId(saveId) &&
+                         incoming().userId == existing().userId &&
+                         (!('createdAt' in existing()) || incoming().createdAt == existing().createdAt) &&
+                         isValidGameSave(incoming());
+        allow delete: if isOwner(userId) && isValidId(saveId);
+      }
+
+      // Best records and speedruns subcollection
+      match /records/{chamberId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(chamberId) &&
+                         incoming().userId == request.auth.uid &&
+                         isValidChamberScore(incoming());
+        allow update: if isOwner(userId) &&
+                         isValidId(chamberId) &&
+                         incoming().userId == existing().userId &&
+                         isValidChamberScore(incoming());
+        allow delete: if isOwner(userId) && isValidId(chamberId);
+      }
+    }
+  }
+}
