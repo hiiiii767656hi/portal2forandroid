@@ -26,8 +26,17 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Prepare mock environment for Secrets Gradle Plugin
+      - name: Restore debug keystore and environment secrets
         run: |
+          # Restore debug.keystore from debug.keystore.base64 if gitignored or missing
+          if [ ! -f debug.keystore ] && [ -f debug.keystore.base64 ]; then
+            base64 -d debug.keystore.base64 > debug.keystore
+          elif [ ! -f debug.keystore ]; then
+            # Fallback generate default standard Android debug keystore if base64 is missing
+            keytool -genkeypair -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
+          # Prepare .env for Secrets Gradle Plugin
           if [ ! -f .env ]; then
             cp .env.example .env 2>/dev/null || touch .env
           fi
