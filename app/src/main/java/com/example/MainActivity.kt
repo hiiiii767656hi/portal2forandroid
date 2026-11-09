@@ -53,15 +53,30 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun AppContent(modifier: Modifier = Modifier) {
-    var currentUser by remember { mutableStateOf(Firebase.auth.currentUser) }
+    var currentUser by remember {
+        mutableStateOf(
+            try {
+                Firebase.auth.currentUser
+            } catch (e: Exception) {
+                null
+            }
+        )
+    }
 
     DisposableEffect(Unit) {
         val listener = FirebaseAuth.AuthStateListener { auth ->
             currentUser = auth.currentUser
         }
-        Firebase.auth.addAuthStateListener(listener)
+        try {
+            Firebase.auth.addAuthStateListener(listener)
+        } catch (e: Exception) {
+            // Firebase initialized in background
+        }
         onDispose {
-            Firebase.auth.removeAuthStateListener(listener)
+            try {
+                Firebase.auth.removeAuthStateListener(listener)
+            } catch (e: Exception) {
+            }
         }
     }
 
@@ -99,7 +114,12 @@ fun MainGameContainer(
         factory = viewModelFactory {
             initializer {
                 val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]!!
-                val databaseId = app.getString(R.string.firestore_database_id)
+                val databaseId = try {
+                    val resId = app.resources.getIdentifier("firestore_database_id", "string", app.packageName)
+                    if (resId != 0) app.getString(resId) else "ai-studio-android-portalmo-83e27219-dc0b-40ab-b6ae-d0046ff69b96"
+                } catch (e: Exception) {
+                    "ai-studio-android-portalmo-83e27219-dc0b-40ab-b6ae-d0046ff69b96"
+                }
                 val db = FirebaseFirestore.getInstance(databaseId)
                 GameViewModel(PortalSaveRepository(db), currentUserId)
             }
